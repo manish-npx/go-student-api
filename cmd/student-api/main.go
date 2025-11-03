@@ -12,6 +12,7 @@ import (
 
 	"github.com/manish-npx/go-student-api/internal/config"
 	"github.com/manish-npx/go-student-api/internal/http/handlers/student"
+	"github.com/manish-npx/go-student-api/internal/storage/sqlite"
 )
 
 func main() {
@@ -20,9 +21,17 @@ func main() {
 
 	// Load database (TODO)
 
+	storage, err := sqlite.New(*cfg)
+	if err != nil {
+		log.Fatal("Error! database connection issue", err)
+	}
+	slog.Info("Storage init", slog.String("env", cfg.Env))
+
+	slog.Info("Storage")
+
 	// Setup routes
 	route := http.NewServeMux()
-	route.HandleFunc("POST /api/student", student.New())
+	route.HandleFunc("POST /api/student", student.New(storage))
 
 	// Setup server
 	server := &http.Server{
