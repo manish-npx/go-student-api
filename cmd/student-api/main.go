@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/manish-npx/go-student-api/internal/config"
+	"github.com/manish-npx/go-student-api/internal/http/handlers/student"
 )
 
 func main() {
@@ -21,13 +22,7 @@ func main() {
 
 	// Setup routes
 	route := http.NewServeMux()
-	route.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
-		w.Write([]byte("Welcome to student api"))
-	})
+	route.HandleFunc("POST /api/student", student.New())
 
 	// Setup server
 	server := &http.Server{
