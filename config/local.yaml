@@ -11,6 +11,6 @@ postgres:
   host: "localhost"
   port: 5432
   user: "postgres"
-  password: "admin"
+  password: "m"
   dbname: "studentdb"
   sslmode: "disable"

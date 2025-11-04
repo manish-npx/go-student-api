@@ -12,9 +12,7 @@ import (
 
 	"github.com/manish-npx/go-student-api/internal/config"
 	"github.com/manish-npx/go-student-api/internal/http/handlers/student"
-	"github.com/manish-npx/go-student-api/internal/storage"
-	"github.com/manish-npx/go-student-api/internal/storage/postgres"
-	"github.com/manish-npx/go-student-api/internal/storage/sqlite"
+	"github.com/manish-npx/go-student-api/internal/storage/factory"
 )
 
 func main() {
@@ -24,22 +22,12 @@ func main() {
 	// Load database (COMPLETED)
 
 	/// 🧩 Choose database based on config
-	var storage storage.Storage
+	//var storage storage.Storage
 	var err error
 
-	switch cfg.DBType {
-	case "sqlite":
-		storage, err = sqlite.New(*cfg)
-		slog.Info("🪶 Using SQLite database", slog.String("path", cfg.StoragePath))
-	case "postgres":
-		storage, err = postgres.New(*cfg)
-		slog.Info("🐘 Using PostgreSQL database", slog.String("dbname", cfg.Postgres.DBName))
-	default:
-		log.Fatalf("❌ Unsupported database type: %s (use sqlite or postgres)", cfg.DBType)
-	}
-
+	storage, err := factory.NewStorage(*cfg)
 	if err != nil {
-		log.Fatal("❌ Database initialization failed:", err)
+		log.Fatalf("❌ Failed to initialize database: %v", err)
 	}
 
 	// 🧩 Setup routes
