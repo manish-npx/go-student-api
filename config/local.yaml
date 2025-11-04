@@ -1,19 +1,16 @@
 env: "dev"
 
-storage_path: "storage/storage.db"
-
 http_server:
   address: "localhost:8082"
 
+db_type: "postgres" # 👈 Change this to "postgres" to switch DB
+
+storage_path: "storage/storage.db" # used only for sqlite
+
 postgres:
   host: "localhost"
-
   port: 5432
-
   user: "postgres"
-
-  password: "m"
-
+  password: "admin"
   dbname: "studentdb"
-
   sslmode: "disable"

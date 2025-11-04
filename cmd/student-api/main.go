@@ -12,38 +12,43 @@ import (
 
 	"github.com/manish-npx/go-student-api/internal/config"
 	"github.com/manish-npx/go-student-api/internal/http/handlers/student"
+	"github.com/manish-npx/go-student-api/internal/storage"
 	"github.com/manish-npx/go-student-api/internal/storage/postgres"
-	//"github.com/manish-npx/go-student-api/internal/storage/sqlite"
+	"github.com/manish-npx/go-student-api/internal/storage/sqlite"
 )
 
 func main() {
-	// Load config
+	// 🧩 Load config
 	cfg := config.MustLoad()
 
 	// Load database (COMPLETED)
 
-	//sqlite loading
-	//storage, err := sqlite.New(*cfg)
+	/// 🧩 Choose database based on config
+	var storage storage.Storage
+	var err error
 
-	//pgsql
-	storage, err := postgres.New(*cfg)
-	if err != nil {
-		log.Fatal("❌ Database connection failed:", err)
+	switch cfg.DBType {
+	case "sqlite":
+		storage, err = sqlite.New(*cfg)
+		slog.Info("🪶 Using SQLite database", slog.String("path", cfg.StoragePath))
+	case "postgres":
+		storage, err = postgres.New(*cfg)
+		slog.Info("🐘 Using PostgreSQL database", slog.String("dbname", cfg.Postgres.DBName))
+	default:
+		log.Fatalf("❌ Unsupported database type: %s (use sqlite or postgres)", cfg.DBType)
 	}
+
 	if err != nil {
-		log.Fatal("Error! database connection issue", err)
+		log.Fatal("❌ Database initialization failed:", err)
 	}
-	slog.Info("Storage init", slog.String("env", cfg.Env))
 
-	slog.Info("Storage")
-
-	// Setup routes
+	// 🧩 Setup routes
 	route := http.NewServeMux()
 	route.HandleFunc("POST /api/student", student.New(storage))
 	route.HandleFunc("GET /api/student/{id}", student.GetById(storage))
 	route.HandleFunc("GET /api/students", student.GetList(storage))
 
-	// Setup server
+	// 🧩 Setup server
 	server := &http.Server{
 		Addr:    cfg.HttpServer.Addr,
 		Handler: route,
@@ -52,6 +57,7 @@ func main() {
 	slog.Info("Server started", slog.String("address", cfg.HttpServer.Addr))
 
 	// Channel for graceful shutdown
+	// 🧩 Graceful shutdown
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 

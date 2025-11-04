@@ -25,6 +25,7 @@ type Config struct {
 	Env         string     `yaml:"env" env:"ENV" env-required:"true"`
 	StoragePath string     `yaml:"storage_path" env:"STORAGE_PATH"`
 	HttpServer  HttpServer `yaml:"http_server"`
+	DBType      string     `yaml:"db_type" env:"DB_TYPE" env-default:"sqlite"`
 	Postgres    Postgres   `yaml:"postgres"`
 }
 
