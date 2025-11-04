@@ -123,3 +123,34 @@ func (s *Sqlite) GetStudents() ([]types.Student, error) {
 
 	return students, nil
 }
+
+// -------------------------------------------------------------
+// UpdateStudentById() → Update student based on id
+// -------------------------------------------------------------
+func (s *Sqlite) UpdateStudentById(id int64, name, email string, age int) (types.Student, error) {
+	// Perform the update
+	query := `UPDATE students SET name = ?, email = ?, age = ? WHERE id = ?`
+	res, err := s.Db.Exec(query, name, email, age, id)
+	if err != nil {
+		return types.Student{}, fmt.Errorf("failed to update student: %w", err)
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		return types.Student{}, fmt.Errorf("no student found with id: %d", id)
+	}
+
+	// Fetch the updated record
+	var student types.Student
+	err = s.Db.QueryRow(
+		`SELECT id, name, email, age FROM students WHERE id = ?`,
+		id,
+	).Scan(&student.ID, &student.Name, &student.Email, &student.Age)
+
+	if err != nil {
+		return types.Student{}, fmt.Errorf("failed to fetch updated student: %w", err)
+	}
+
+	fmt.Printf("✅ Updated student record (SQLite): %+v\n", student)
+	return student, nil
+}

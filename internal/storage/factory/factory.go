@@ -2,6 +2,7 @@ package factory
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/manish-npx/go-student-api/internal/config"
 	"github.com/manish-npx/go-student-api/internal/storage"
@@ -21,9 +22,15 @@ var factories = map[string]func(config.Config) (storage.Storage, error){
 
 // 🧩 Main entrypoint for selecting DB
 func NewStorage(cfg config.Config) (storage.Storage, error) {
+	if cfg.DBType == "" {
+		log.Fatal("❌ No db_driver specified in config.yaml")
+	}
 	createFn, ok := factories[cfg.DBType]
 	if !ok {
-		return nil, fmt.Errorf("unsupported db type: %s (use sqlite or postgres)", cfg.DBType)
+		return nil, fmt.Errorf(
+			"unsupported db type: %s (supported: sqlite, postgres)",
+			cfg.DBType,
+		)
 	}
 	return createFn(cfg)
 }

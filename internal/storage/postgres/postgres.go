@@ -153,3 +153,26 @@ func (p *Postgres) GetStudents() ([]types.Student, error) {
 
 	return students, nil
 }
+
+// -------------------------------------------------------------
+// UpdateStudentById() → Update student based on id
+// -------------------------------------------------------------
+func (p *Postgres) UpdateStudentById(id int64, name, email string, age int) (types.Student, error) {
+	query := `UPDATE students SET name = $1, email = $2, age = $3 WHERE id = $4;`
+
+	res, err := p.DB.Exec(query, name, email, age, id)
+	if err != nil {
+		return types.Student{}, fmt.Errorf("failed to scan student: %w", err)
+	}
+	// Check if any rows were updated
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		return types.Student{}, fmt.Errorf("no student found with id: %d", id)
+	}
+
+	student, _ := p.GetStudentById(id)
+
+	fmt.Println("Update student record is ", res)
+
+	return student, nil
+}

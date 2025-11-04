@@ -35,6 +35,7 @@ func main() {
 	route.HandleFunc("POST /api/student", student.New(storage))
 	route.HandleFunc("GET /api/student/{id}", student.GetById(storage))
 	route.HandleFunc("GET /api/students", student.GetList(storage))
+	route.HandleFunc("PUT /api/student/{id}", student.UpdateById(storage))
 
 	// 🧩 Setup server
 	server := &http.Server{
@@ -43,6 +44,10 @@ func main() {
 	}
 
 	slog.Info("Server started", slog.String("address", cfg.HttpServer.Addr))
+
+	slog.Info("💾 Database initialized",
+		slog.String("driver", cfg.DBType),
+	)
 
 	// Channel for graceful shutdown
 	// 🧩 Graceful shutdown

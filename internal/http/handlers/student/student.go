@@ -138,3 +138,76 @@ func GetList(storage storage.Storage) http.HandlerFunc {
 		response.WriteJson(w, http.StatusOK, students)
 	}
 }
+
+// 🧩 PUT /api/student/{id}
+// ---------------------------------------------------------
+// This handler update creates a new student record.
+// 1. Validates HTTP method (must be PUT)
+// 2. Decodes JSON body → types.Student
+// 3. Validates fields using go-playground/validator
+
+func UpdateById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("Update student record based on Id")
+
+		// ✅ Ensure correct HTTP method
+		if r.Method != http.MethodPut {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var student types.Student
+
+		// 🧠 Decode request body JSON → Go struct
+		err := json.NewDecoder(r.Body).Decode(&student)
+		if errors.Is(err, io.EOF) {
+			// Empty body — client sent no JSON
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("empty body")))
+			return
+		}
+		if err != nil {
+			// Invalid JSON syntax
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("invalid JSON: %v", err)))
+			return
+		}
+		id := r.PathValue("id")
+		slog.Info("Getting a student record", slog.String("id", id))
+
+		// 🔢 Convert id from string → int64
+		intId64, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("invalid id %v", id)))
+			return
+		}
+
+		// 💾 Retrieve all students from DB
+		lastId, err := storage.UpdateStudentById(
+			intId64,
+			student.Name,
+			student.Email,
+			student.Age,
+		)
+		if err != nil {
+			slog.Error("Error getting students", slog.String("error", err.Error()))
+			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
+			return
+		}
+
+		// 🚀 Send JSON list// 📦 Build success response payload
+		data := map[string]any{
+			"success": true,
+			"id":      lastId.ID,
+			"student": student,
+			"message": "Student record created successfully",
+		}
+
+		// 🪵 Log structured info about the new record
+		slog.Info("Updated student record",
+			slog.String("name", student.Name),
+			slog.String("email", student.Email),
+		)
+
+		// 🚀 Send response
+		response.WriteJson(w, http.StatusOK, data)
+	}
+}

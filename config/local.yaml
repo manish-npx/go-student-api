@@ -3,7 +3,7 @@ env: "dev"
 http_server:
   address: "localhost:8082"
 
-db_type: "postgres" # 👈 Change this to "postgres" to switch DB
+db_type: "postgres" # 👈 Change this to "postgres" "sqlite" to switch DB
 
 storage_path: "storage/storage.db" # used only for sqlite
 
