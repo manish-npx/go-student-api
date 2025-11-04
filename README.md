@@ -1,64 +1,64 @@
 # Go Student API
 
-![Go](https://img.shields.io/badge/Go-100%25-00ADD8?style=flat-square&logo=go)
-
+![Go Version](https://img.shields.io/badge/Go-1.19+-00ADD8?style=flat&logo=go)
+![Last Updated](https://img.shields.io/badge/Last%20Updated-2025--11--04-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
 A Go API project for managing student data with a clean architecture approach.
+
+A RESTful API service for managing student data built with Go, following clean architecture principles.
 
 ## Project Overview
 
-This RESTful API service handles student management operations including:
+This API service provides the following functionality:
 - Student CRUD operations
 - Course enrollment/management
 - Student data validation
-- Database persistence
+- Database persistence (PostgreSQL/SQLite support)
+- RESTful API endpoints
 
 ## Project Structure
 
 ```
 go-student-api/
 ├── cmd/
-│   └── api/
+│   └── student-api/
 │       └── main.go          # Application entry point
 ├── configs/
 │   ├── config.dev.yaml      # Development configuration
 │   └── config.prod.yaml     # Production configuration
 ├── internal/
-│   ├── db/
-│   │   ├── config.go        # Database configuration
-│   │   └── postgres.go      # Database connection management
-│   ├── handlers/
-│   │   ├── student.go       # Student HTTP handlers
-│   │   └── course.go        # Course HTTP handlers
-│   ├── models/
-│   │   ├── student.go       # Student domain model
-│   │   └── course.go        # Course domain model
-│   ├── repository/
-│   │   ├── postgres/        # PostgreSQL implementations
-│   │   └── interfaces.go    # Repository interfaces
-│   ├── service/
-│   │   └── student.go       # Business logic layer
-│   └── server/
-│       └── server.go        # HTTP server setup
-├── migrations/
+│   ├── config/              # Configuration management
+│   │   └── config.go        # Config structs and loading logic
+│   ├── http/
+│   │   └── handlers/        # HTTP request handlers
+│   │       └── student/     # Student-related handlers
+│   ├── storage/             # Data access layer
+│   │   ├── factory/         # Storage implementation factory
+│   │   ├── sqlite/          # SQLite implementation
+│   │   └── postgres/        # PostgreSQL implementation
+│   ├── types/               # Domain types/models
+│   │   └── types.go         # Student and Course types
+│   └── utils/               # Utility packages
+│       └── response/        # HTTP response helpers
+├── migrations/              # Database migration files
 │   ├── 000001_init.up.sql
 │   └── 000001_init.down.sql
-├── pkg/
+├── pkg/                     # Public libraries
 │   └── validator/           # Shared validation utilities
-├── scripts/
+├── scripts/                 # Utility scripts
 │   ├── migrations.sh        # Database migration helper
-│   └── setup.sh            # Development setup script
-├── .env.example
-├── docker-compose.yml
-├── Dockerfile
-├── go.mod
-├── go.sum
-└── README.md
+│   └── setup.sh             # Development setup script
+├── .env.example             # Environment variables template
+├── docker-compose.yml       # Docker compose configuration
+├── Dockerfile               # Docker build configuration
+├── go.mod                   # Go modules file
+└── README.md                # Project documentation
 ```
 
 ## Prerequisites
 
 - Go 1.19 or higher
-- PostgreSQL
+- PostgreSQL or SQLite
 - Docker (optional)
 - Make (optional)
 
@@ -70,10 +70,10 @@ git clone https://github.com/manish-npx/go-student-api.git
 cd go-student-api
 ```
 
-2. Copy environment file and configure
+2. Set up environment variables
 ```bash
 cp .env.example .env
-# Edit .env with your database credentials and other settings
+# Edit .env with your configuration
 ```
 
 3. Start the database (using Docker)
@@ -88,13 +88,13 @@ docker-compose up -d postgres
 
 5. Build and run the application
 ```bash
-go build -o bin/api ./cmd/api
+go build -o bin/api ./cmd/student-api
 ./bin/api
 ```
 
-## Environment Variables
+## Configuration
 
-Create a `.env` file in the project root with the following variables:
+Create a `.env`  or `yaml` file with the following variables:
 
 ```env
 # Server
@@ -119,16 +119,16 @@ DB_CONN_MAX_LIFETIME=300s
 ## API Endpoints
 
 ### Students
-- `GET /api/v1/students` - List all students
-- `GET /api/v1/students/{id}` - Get a specific student
-- `POST /api/v1/students` - Create a new student
-- `PUT /api/v1/students/{id}` - Update a student
-- `DELETE /api/v1/students/{id}` - Delete a student
+- `GET /api/students` - List all students
+- `GET /api/student/{id}` - Get a specific student
+- `POST /api/student` - Create a new student
+- `PUT /api/student/{id}` - Update a student
+- `DELETE /api/student/{id}` - Delete a student
 
 ### Courses
-- `GET /api/v1/courses` - List all courses
-- `POST /api/v1/courses` - Create a new course
-- `POST /api/v1/students/{id}/enroll` - Enroll student in courses
+- `GET /api/courses` - List all courses
+- `POST /api/courses` - Create a new course
+- `POST /api/students/{id}/enroll` - Enroll student in courses
 
 ## Database Schema
 
@@ -136,11 +136,9 @@ DB_CONN_MAX_LIFETIME=300s
 ```sql
 CREATE TABLE students (
     id SERIAL PRIMARY KEY,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    age INTEGER NOT NULL
 );
 ```
 
@@ -150,8 +148,7 @@ CREATE TABLE courses (
     id SERIAL PRIMARY KEY,
     code VARCHAR(10) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    description TEXT
 );
 ```
 
@@ -160,17 +157,11 @@ CREATE TABLE courses (
 CREATE TABLE enrollments (
     student_id INTEGER REFERENCES students(id),
     course_id INTEGER REFERENCES courses(id),
-    enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (student_id, course_id)
 );
 ```
 
 ## Development
-
-### Running Tests
-```bash
-go test ./...
-```
 
 ### Running with Docker
 ```bash
@@ -178,7 +169,12 @@ docker build -t student-api .
 docker run -p 8080:8080 --env-file .env student-api
 ```
 
-### Running Migrations
+### Running Tests
+```bash
+go test ./...
+```
+
+### Database Migrations
 ```bash
 # Apply migrations
 ./scripts/migrations.sh up
@@ -192,12 +188,11 @@ docker run -p 8080:8080 --env-file .env student-api
 - `cmd/`: Contains the main application entry points
 - `configs/`: Configuration files for different environments
 - `internal/`: Private application code
-  - `db/`: Database connection and configuration
-  - `handlers/`: HTTP request handlers
-  - `models/`: Domain models and business logic
-  - `repository/`: Data access layer
-  - `service/`: Business logic layer
-  - `server/`: HTTP server setup and routing
+  - `config/`: Configuration management
+  - `http/handlers/`: HTTP request handlers
+  - `storage/`: Data access layer implementations
+  - `types/`: Domain models
+  - `utils/`: Utility packages
 - `migrations/`: Database migration files
 - `pkg/`: Public libraries that can be used by external projects
 - `scripts/`: Utility scripts for development and deployment
@@ -219,4 +214,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 Manish - [@manish-npx](https://github.com/manish-npx)
 
 Project Link: [https://github.com/manish-npx/go-student-api](https://github.com/manish-npx/go-student-api)
-```
