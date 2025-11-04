@@ -41,6 +41,7 @@ func main() {
 	route := http.NewServeMux()
 	route.HandleFunc("POST /api/student", student.New(storage))
 	route.HandleFunc("GET /api/student/{id}", student.GetById(storage))
+	route.HandleFunc("GET /api/students", student.GetList(storage))
 
 	// Setup server
 	server := &http.Server{
