@@ -1,6 +1,10 @@
 {
     "cSpell.words": [
         "cleanenv",
-        "ilyakaznacheev"
+        "dbname",
+        "ilyakaznacheev",
+        "pgsql",
+        "sslmode",
+        "studentdb"
     ]
 }
